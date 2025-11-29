@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Plus, Edit2, Trash2, Download, X, Save } from 'lucide-react';
+import { Search, Filter, Plus, Edit2, Trash2, Download, X, Save, ArrowLeft, UserX } from 'lucide-react';
 import { Student } from '../types';
 
 interface StudentManagerProps {
@@ -21,6 +21,9 @@ const StudentManager: React.FC<StudentManagerProps> = ({
   const [filterClass, setFilterClass] = useState('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  
+  // New State for Remove Section
+  const [isRemoveMode, setIsRemoveMode] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -33,7 +36,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
 
   const availableClasses = useMemo(() => {
     const classes = Array.from(new Set(students.map((s) => s.standard)));
-    return ['All', ...classes.sort()];
+    return ['All', ...classes.sort((a, b) => Number(a) - Number(b))];
   }, [students]);
 
   const filteredStudents = useMemo(() => {
@@ -94,6 +97,109 @@ const StudentManager: React.FC<StudentManagerProps> = ({
     document.body.removeChild(link);
   };
 
+  // --- REMOVE SECTION VIEW ---
+  if (isRemoveMode) {
+    return (
+      <div className="pb-20 space-y-6">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex flex-col gap-4">
+            
+            {/* Header for Remove Section */}
+            <div className="flex justify-between items-center border-b pb-4">
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setIsRemoveMode(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full text-gray-500"
+                >
+                  <ArrowLeft size={24} />
+                </button>
+                <div>
+                  <h2 className="text-xl font-bold text-red-600 flex items-center gap-2">
+                    <UserX size={24} />
+                    Remove Students
+                  </h2>
+                  <p className="text-sm text-gray-500">Select class to delete students</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-red-50 p-4 rounded-xl border border-red-100">
+              <div className="w-full md:w-auto">
+                <label className="text-xs font-bold text-red-400 uppercase tracking-wider block mb-1">Select Class</label>
+                <select
+                  value={filterClass}
+                  onChange={(e) => setFilterClass(e.target.value)}
+                  className="w-full md:min-w-[200px] px-4 py-2 bg-white border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-700"
+                >
+                  {availableClasses.map((c) => (
+                    <option key={c} value={c}>{c === 'All' ? 'All Classes' : `Std ${c}`}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex-1 w-full text-right">
+                {filterClass !== 'All' && filteredStudents.length > 0 && (
+                   <button 
+                      onClick={() => {
+                         if(confirm(`WARNING: This will delete ALL ${filteredStudents.length} students in Standard ${filterClass}. This action cannot be undone. Are you sure?`)) {
+                            onDeleteClass(filterClass);
+                         }
+                      }}
+                      className="w-full md:w-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-sm flex items-center justify-center gap-2 text-sm font-medium"
+                   >
+                      <Trash2 size={16} />
+                      Delete All Class {filterClass}
+                   </button>
+                )}
+              </div>
+            </div>
+
+            {/* List View */}
+            <div className="mt-2">
+              <h3 className="font-semibold text-gray-700 mb-3">
+                 Student List {filterClass !== 'All' && `(Std ${filterClass})`}
+                 <span className="ml-2 text-xs font-normal text-gray-400">{filteredStudents.length} students</span>
+              </h3>
+              
+              <div className="space-y-2">
+                {filteredStudents.length > 0 ? (
+                  filteredStudents.map((student) => (
+                    <div key={student.id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:border-red-200 hover:shadow-sm transition-all group">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-bold">
+                          {student.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800">{student.name}</p>
+                          <p className="text-xs text-gray-500">Std: {student.standard} • {student.whatsapp}</p>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => { if(confirm(`Delete ${student.name}?`)) onDeleteStudent(student.id) }}
+                        className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2 text-sm font-semibold shadow-sm"
+                      >
+                        <span>Remove</span>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <p>No students found in this class.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- DEFAULT GRID VIEW ---
   return (
     <div className="pb-20 space-y-6">
       {/* Header Controls */}
@@ -109,7 +215,7 @@ const StudentManager: React.FC<StudentManagerProps> = ({
           />
         </div>
         
-        <div className="flex gap-2 w-full md:w-auto overflow-x-auto">
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
           <select
             value={filterClass}
             onChange={(e) => setFilterClass(e.target.value)}
@@ -120,35 +226,30 @@ const StudentManager: React.FC<StudentManagerProps> = ({
             ))}
           </select>
 
-          <button onClick={handleExport} className="p-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+          <button onClick={handleExport} className="p-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200" title="Export CSV">
             <Download size={20} />
           </button>
           
-          {filterClass !== 'All' && (
-             <button 
-                onClick={() => {
-                   if(confirm(`Are you sure you want to delete ALL students in Standard ${filterClass}?`)) {
-                      onDeleteClass(filterClass);
-                   }
-                }}
-                className="p-2 text-red-600 bg-red-100 rounded-lg hover:bg-red-200"
-                title="Delete all in this class"
-             >
-                <Trash2 size={20} />
-             </button>
-          )}
+          <button 
+            onClick={() => setIsRemoveMode(true)}
+            className="p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 border border-red-100"
+            title="Remove Students"
+          >
+             <UserX size={20} />
+          </button>
 
           <button
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-sm whitespace-nowrap"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 shadow-sm whitespace-nowrap"
           >
             <Plus size={18} />
-            Add Student
+            <span className="hidden sm:inline">Add Student</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
       </div>
 
-      {/* Student List */}
+      {/* Student Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredStudents.map((student) => {
           const due = student.totalFee - student.paidFee;
@@ -179,16 +280,13 @@ const StudentManager: React.FC<StudentManagerProps> = ({
                  <button onClick={() => handleOpenModal(student)} className="p-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100">
                     <Edit2 size={16} />
                  </button>
-                 <button onClick={() => { if(confirm('Delete student?')) onDeleteStudent(student.id) }} className="p-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100">
-                    <Trash2 size={16} />
-                 </button>
               </div>
             </div>
           );
         })}
         {filteredStudents.length === 0 && (
           <div className="col-span-full text-center py-12 text-gray-400">
-            No students found. Add one to get started!
+            No students found.
           </div>
         )}
       </div>
