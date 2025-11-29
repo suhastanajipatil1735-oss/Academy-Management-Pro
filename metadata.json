@@ -1,0 +1,5 @@
+{
+  "name": "Academy Manager Pro",
+  "description": "A comprehensive mobile-first management dashboard for academies. Features student tracking, fee management, automated WhatsApp reminders, and real-time analytics.",
+  "requestFramePermissions": []
+}
