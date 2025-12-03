@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageCircle, CheckCircle, Clock } from 'lucide-react';
+import { MessageCircle, Clock, CheckCircle2, AlertCircle, Send } from 'lucide-react';
 import { Student } from '../types';
 
 interface RemindersProps {
@@ -12,6 +12,7 @@ const Reminders: React.FC<RemindersProps> = ({ students, onUpdateStudent, academ
   const [filterClass, setFilterClass] = useState('All');
 
   const pendingStudents = students.filter(s => (s.totalFee - s.paidFee) > 0);
+  const totalDue = pendingStudents.reduce((acc, s) => acc + (s.totalFee - s.paidFee), 0);
   
   const filteredList = pendingStudents.filter(s => 
     filterClass === 'All' || s.standard === filterClass
@@ -40,49 +41,58 @@ const Reminders: React.FC<RemindersProps> = ({ students, onUpdateStudent, academ
 
   const getRestrictionLabel = (lastSent: number) => {
     const hoursLeft = 24 - Math.floor((Date.now() - lastSent) / (1000 * 60 * 60));
-    return `Wait ${hoursLeft}h`;
+    return `${hoursLeft}h cooldown`;
   };
 
   return (
-    <div className="pb-20 space-y-6">
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <MessageCircle className="text-brand-600" />
-            Fee Reminders
-          </h2>
+    <div className="max-w-4xl mx-auto space-y-6">
+       
+       {/* Summary Header */}
+       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">Pending Reminders</h2>
+            <p className="text-slate-500 text-sm">
+               {pendingStudents.length} students pending • <span className="text-red-600 font-medium">Total Due: ₹{totalDue.toLocaleString()}</span>
+            </p>
+          </div>
           <select
             value={filterClass}
             onChange={(e) => setFilterClass(e.target.value)}
-            className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500"
+            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-brand-500 outline-none min-w-[150px]"
           >
             <option value="All">All Classes</option>
             {[...new Set(pendingStudents.map(s => s.standard))].sort().map(c => (
-              <option key={c} value={c}>Std {c}</option>
+              <option key={c} value={c}>Standard {c}</option>
             ))}
           </select>
-        </div>
+       </div>
 
-        <div className="overflow-hidden">
+       {/* List */}
+       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           {filteredList.length > 0 ? (
-            <div className="space-y-3">
+            <div className="divide-y divide-slate-100">
               {filteredList.map(student => {
                  const restricted = isRestricted(student.lastReminderSent);
                  const due = student.totalFee - student.paidFee;
                  return (
-                  <div key={student.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-brand-200 transition-colors">
-                    <div className="mb-3 sm:mb-0">
-                      <p className="font-semibold text-gray-800">{student.name}</p>
-                      <p className="text-xs text-gray-500">Std {student.standard} • Due: <span className="text-red-600 font-medium">₹{due}</span></p>
+                  <div key={student.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors group">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
+                          <AlertCircle size={20} />
+                       </div>
+                       <div>
+                          <p className="font-semibold text-slate-800">{student.name}</p>
+                          <p className="text-sm text-slate-500">Class {student.standard} • <span className="text-red-600 font-medium">₹{due} overdue</span></p>
+                       </div>
                     </div>
                     
                     <button
                       onClick={() => !restricted && handleSendReminder(student)}
                       disabled={restricted}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all w-full sm:w-auto justify-center ${
+                      className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all w-full sm:w-auto ${
                         restricted 
-                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                          : 'bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md'
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                          : 'bg-green-600 text-white hover:bg-green-700 shadow-sm'
                       }`}
                     >
                       {restricted ? (
@@ -92,8 +102,8 @@ const Reminders: React.FC<RemindersProps> = ({ students, onUpdateStudent, academ
                         </>
                       ) : (
                         <>
-                          <MessageCircle size={16} />
-                          Send WhatsApp
+                          <Send size={16} />
+                          Send Reminder
                         </>
                       )}
                     </button>
@@ -102,13 +112,15 @@ const Reminders: React.FC<RemindersProps> = ({ students, onUpdateStudent, academ
               })}
             </div>
           ) : (
-             <div className="text-center py-10 text-gray-400">
-                <CheckCircle size={48} className="mx-auto mb-2 opacity-50" />
-                <p>No pending dues! Great job.</p>
+             <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4">
+                   <CheckCircle2 size={32} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">All Clear!</h3>
+                <p className="text-slate-400">No pending dues for this selection.</p>
              </div>
           )}
-        </div>
-      </div>
+       </div>
     </div>
   );
 };

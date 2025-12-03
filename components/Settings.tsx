@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, LogOut } from 'lucide-react';
+import { Save, LogOut, Building, ShieldCheck } from 'lucide-react';
 import { AcademySettings } from '../types';
 
 interface SettingsProps {
@@ -19,38 +19,64 @@ const Settings: React.FC<SettingsProps> = ({ settings, onSave, onLogout }) => {
   };
 
   return (
-    <div className="pb-20 space-y-6">
-       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Academy Settings</h2>
-          
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Academy Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none"
-            />
+    <div className="max-w-2xl mx-auto space-y-6">
+       
+       {/* General Settings Card */}
+       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+             <Building size={18} className="text-slate-500" />
+             <h3 className="font-semibold text-slate-700">General Information</h3>
           </div>
+          
+          <div className="p-6">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Academy Organization Name</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none text-slate-800"
+                placeholder="Enter academy name"
+              />
+            </div>
+            <p className="text-xs text-slate-400 mt-2">This name will be visible on the dashboard and reminder messages.</p>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 shadow-sm flex items-center gap-2 disabled:opacity-70"
+              >
+                <Save size={18} />
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+       </div>
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-3 bg-brand-600 text-white rounded-xl font-semibold hover:bg-brand-700 shadow-md flex items-center justify-center gap-2 mb-8"
-          >
-            <Save size={20} />
-            {saving ? 'Saving...' : 'Update Name'}
-          </button>
-
-          <div className="border-t pt-6">
-            <button
+       {/* Security Zone */}
+       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+             <ShieldCheck size={18} className="text-slate-500" />
+             <h3 className="font-semibold text-slate-700">Session Management</h3>
+          </div>
+          <div className="p-6 flex items-center justify-between">
+             <div>
+               <h4 className="font-medium text-slate-800">Sign out</h4>
+               <p className="text-sm text-slate-400">End your current session on this device.</p>
+             </div>
+             <button
               onClick={onLogout}
-              className="w-full py-3 border-2 border-red-100 text-red-600 bg-red-50 rounded-xl font-semibold hover:bg-red-100 flex items-center justify-center gap-2"
+              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2 hover:text-red-600 hover:border-red-200 transition-colors"
             >
-              <LogOut size={20} />
+              <LogOut size={18} />
               Logout
             </button>
           </div>
+       </div>
+       
+       <div className="text-center pt-8">
+         <p className="text-xs text-slate-400 font-mono">Academy Manager Pro v1.2.0</p>
        </div>
     </div>
   );
